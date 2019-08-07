@@ -1,0 +1,156 @@
+<template>
+    <lightning-card title="Case Expenses">
+        <lightning-button class="undoButton" variant="destructive" label="Undo Changes" onclick={undoChanges} slot="actions" disabled></lightning-button>
+        <lightning-button variant="brand" label="Save All" slot="actions" onclick={saveRecords}></lightning-button>
+        <template if:true={expenses}>
+            <div if:true={isLoaded} class="slds-is-relative">
+                <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </div>
+            <div if:false={isLoaded}>
+                <table class="slds-table slds-table_bordered slds-table_cell-buffer"> 
+                    <thead>
+                        <tr class="slds-text-title_caps">
+                            <th scope="col">
+                                <div class="">User</div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate" title="Type">Permission</div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate" title="Description">Description</div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate" title="Quantity">Quantity</div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate" title="Total">Total</div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate" title="Upload">File Upload</div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate" title="Delete">Delete</div>
+                            </th>
+                        </tr>
+                    </thead>   
+                    <tbody>   
+                        <template for:each={expenses.data} for:item="exp">
+                            <tr class="slds-text-title_caps" key={exp.Id}>
+                                <td>
+                                    <div class="slds-form-element">
+                                        <lightning-input type="date" name="expensedate" data-recid={exp.Id} value={exp.ExpenseDate}
+                                        onchange={updateValue} data-field="ExpenseDate__c"></lightning-input>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="slds-form-element">
+                                        <lightning-combobox
+                                            data-itemcostname={exp.ItemCost_Name}
+                                            data-cost={exp.Price}
+                                            data-field="ItemCost__c"
+                                            name="Name"
+                                            value={exp.ItemCost}
+                                            placeholder="--NONE--"
+                                            options={nameOptions}
+                                            onchange={updateValue}
+                                            data-recid={exp.Id}
+                                        ></lightning-combobox>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="slds-form-element">
+                                        <lightning-textarea data-recid={exp.Id} value={exp.Description} placeholder="Description..." onchange={updateValue} data-field="Description"></lightning-textarea>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="slds-form-element">
+                                        <lightning-input class="quantity" data-qtyid={exp.Id} data-recid={exp.Id} disabled={exp.CustomPrice}
+                                        type="number" name="Quantity" value={exp.Quantity} onchange={updateValue} data-field="Quantity__c"></lightning-input>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="slds-form-element">
+                                        <lightning-input class="total" data-prcid={exp.Id} data-recid={exp.Id} disabled={exp.notCustomPrice}
+                                        type="number" name="Price" value={exp.Price} onchange={updateValue} data-field="Price__c"></lightning-input>
+                                    </div>
+                                </td>
+                                <td>
+                                    <lightning-file-upload
+                                        label="Attach receipt"
+                                        name="fileUploader"
+                                        accept={acceptedFormats}
+                                        record-id={exp.Id}
+                                        onuploadfinished={handleUploadFinished}
+                                        multiple>
+                                    </lightning-file-upload>
+                                </td>
+                                <td>
+                                    <div class="slds-p-right_x-large slds-col_bump-left slds-form-element slds-p-top_medium">
+                                        <lightning-icon data-recid={exp.Id} icon-name="utility:delete" onclick={deleteLine} alternative-text="Delete"></lightning-icon>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                        <template for:each={newExpenses} for:item="exp">
+                            <tr class="slds-text-title_caps" key={exp.Id}>
+                                <td>
+                                    <div class="slds-form-element">
+                                        <lightning-input type="date" name="expensedate" data-row={exp.Id} value={exp.ExpenseDate}
+                                        onchange={updateNewValue} data-field="ExpenseDate__c"></lightning-input>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="slds-form-element">
+                                        <lightning-combobox
+                                            data-itemcostname={exp.ItemCost_Name}
+                                            data-cost={exp.Price}
+                                            data-field='ItemCost__c'
+                                            data-row={exp.row}
+                                            name="Name"
+                                            value={exp.ItemCost}
+                                            placeholder="--NONE--"
+                                            options={nameOptions}
+                                            onchange={updateNewValue}
+                                        ></lightning-combobox>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="slds-form-element">
+                                        <lightning-textarea value={exp.Description} placeholder="Description" onchange={updateNewValue} data-row={exp.row} data-field="Description" ></lightning-textarea>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="slds-form-element">
+                                        <lightning-input type="number" name="Quantity" value={exp.Quantity} onchange={updateNewValue}  disabled={exp.CustomPrice}
+                                        data-qtyrow={exp.row} data-row={exp.row} data-field="Quantity__c"></lightning-input>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="slds-form-element">
+                                        <lightning-input class="total" data-row={exp.row} type="number" name="Price" disabled={exp.notCustomPrice}
+                                        data-prcrow={exp.row} value={exp.Price} onchange={updateNewValue} data-field="Price__c"></lightning-input>
+                                    </div>
+                                </td>
+                                <td>
+                                    <lightning-file-upload
+                                        label="Attach receipt"
+                                        name="fileUploader"
+                                        accept={acceptedFormats}
+                                        record-id={exp.Id}
+                                        onuploadfinished={handleUploadFinished}
+                                        multiple>
+                                    </lightning-file-upload>
+                                </td>
+                                <td>
+                                    <div class="slds-p-right_x-large slds-col_bump-left slds-form-element slds-p-top_medium">
+                                        <lightning-icon data-row={exp.row} icon-name="utility:delete" onclick={deleteNewLine} alternative-text="Delete"></lightning-icon>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </template> 
+    </lightning-card>
+</template>
